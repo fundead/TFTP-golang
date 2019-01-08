@@ -1,9 +1,12 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+
+	tftp "igneous.io/tftp/lib"
+)
 
 func main() {
-	fmt.Println("Hello world!")
-
-	// TODO implement the in-memory tftp server
+	go tftp.Listen()
+	fmt.Scanln() // TODO exit ctrl-c
 }
