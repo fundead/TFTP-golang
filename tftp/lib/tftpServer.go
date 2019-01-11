@@ -3,7 +3,6 @@ package tftp
 import (
 	"log"
 	"net"
-	"reflect"
 )
 
 type UDPPacket struct {
@@ -49,7 +48,6 @@ func process(pc net.PacketConn, inbound chan UDPPacket, connectionService *Conne
 			if err != nil {
 				log.Println(err)
 			}
-			log.Println(reflect.TypeOf(packet)) // TODO rm
 			parse(pc, udpPacket.Address, packet, connectionService)
 		}
 	}
@@ -66,22 +64,23 @@ func parse(pc net.PacketConn, addr net.Addr, packet Packet, connectionSvc *Conne
 	case *PacketError:
 		log.Println("Warning: received an error packet")
 	default:
-		log.Println("Unknown packet/opcode received")
+		LogUnknownRequest()
 	}
 }
 
 // For new read/write requests: send appropriate ACK or DATA response
 func handleRequest(pc net.PacketConn, addr net.Addr, pr *PacketRequest, connectionSvc *ConnectionService) {
 	if pr.Op == OpRRQ { // Read Request
-		log.Println("Read req")
+		LogReadRequest(pr.Filename)
 		data, err := connectionSvc.openRead(addr.String(), pr.Filename)
 		if err != nil {
+			LogFileNotFound(pr.Filename)
 			sendResponse(pc, addr, &PacketError{0x1, "File not found (error opening file read)"})
 		} else {
 			sendResponse(pc, addr, &PacketData{0x1, data})
 		}
 	} else if pr.Op == OpWRQ { // Write Request
-		log.Println("Write req")
+		LogWriteRequest(pr.Filename)
 		connectionSvc.openWrite(addr.String(), pr.Filename)
 		sendResponse(pc, addr, &PacketAck{0})
 	}

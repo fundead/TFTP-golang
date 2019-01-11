@@ -135,7 +135,6 @@ func parseUint16(buf []byte) (uint16, []byte, error) {
 // parseString reads a null-terminated ASCII string from buf,
 // returning it along with a slice pointing at the next position in the buffer.
 func parseString(buf []byte) (string, []byte, error) {
-	fmt.Println(buf)
 	i := bytes.IndexByte(buf, 0)
 	if i < 0 {
 		return "", nil, errors.New("packet truncated 2")
