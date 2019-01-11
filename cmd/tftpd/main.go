@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	tftp "igneous.io/tftp/lib"
+	tftp "github.com/fundead/tftp/lib"
 )
 
 func main() {
