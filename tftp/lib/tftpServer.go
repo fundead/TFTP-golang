@@ -11,11 +11,12 @@ type UDPPacket struct {
 	Data    []byte
 }
 
+// Listen establishes a new TFTPServer and listens on port 69
 func Listen(connectionService *ConnectionService) {
 	inbound := make(chan UDPPacket) // TODO add buffered channel length
 	addr := net.UDPAddr{
 		IP:   net.ParseIP("127.0.0.1"),
-		Port: 6900,
+		Port: 69,
 	}
 	conn, err := net.ListenUDP("udp", &addr)
 	if err != nil {
@@ -26,7 +27,7 @@ func Listen(connectionService *ConnectionService) {
 
 	go read(conn, inbound)
 	go process(inbound, connectionService)
-	log.Println("Server listening on port 6900")
+	log.Println("Server listening on port 69")
 
 	// TODO
 	for {
@@ -75,6 +76,7 @@ func parse(addr *net.UDPAddr, packet Packet, connectionSvc *ConnectionService) {
 	}
 }
 
+// For new read/write requests: send appropriate ACK or DATA response
 func handleRequest(addr *net.UDPAddr, pr *PacketRequest, connectionSvc *ConnectionService) {
 	if pr.Op == OpRRQ { // Read Request
 		data := connectionSvc.openRead(pr.Filename)
@@ -84,19 +86,6 @@ func handleRequest(addr *net.UDPAddr, pr *PacketRequest, connectionSvc *Connecti
 		go sendResponse(addr, &PacketAck{0})
 	}
 	log.Println("Opened request with type " + string(pr.Op))
-}
-
-func sendResponse(addr *net.UDPAddr, p Packet) {
-	serverAddr := net.UDPAddr{
-		IP:   net.ParseIP("127.0.0.1"),
-		Port: 6900,
-	}
-	conn, err := net.DialUDP("udp", &serverAddr, addr)
-	if err != nil {
-		conn.WriteToUDP(p.Serialize(), addr)
-	} else {
-		log.Fatalln("Error: failed to write next data in response to ACK")
-	}
 }
 
 // For a read: sends the next DATA block in response to an ACK
@@ -112,4 +101,17 @@ func handleData(addr *net.UDPAddr, pd *PacketData, connectionSvc *ConnectionServ
 	connectionSvc.writeData("", pd.Data) // TODO
 	ackPacket := &PacketAck{pd.BlockNum}
 	sendResponse(addr, ackPacket)
+}
+
+func sendResponse(addr *net.UDPAddr, p Packet) {
+	serverAddr := net.UDPAddr{
+		IP:   net.ParseIP("127.0.0.1"),
+		Port: 6900,
+	}
+	conn, err := net.DialUDP("udp", &serverAddr, addr)
+	if err != nil {
+		conn.WriteToUDP(p.Serialize(), addr)
+	} else {
+		log.Fatalln("Error: failed to write next data in response to ACK")
+	}
 }
