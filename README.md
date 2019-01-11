@@ -2,6 +2,8 @@
 
 A sample RFC 1350 server, implemented from scratch according to the [spec](https://tools.ietf.org/html/rfc1350) in Go.
 
+The core logic is implemented in `tftpserver.go`, `connection_service.go` and `memory_filestore.go`.
+
 ## Running the server
 
 Clone this repo and execute `./runServer.sh` from a POSIX-compatible shell. Superuser permissions are needed due to it listening on the default port 69.
