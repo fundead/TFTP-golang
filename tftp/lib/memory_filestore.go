@@ -2,8 +2,6 @@ package tftp
 
 import (
 	"errors"
-	"log"
-	"strconv"
 )
 
 type MemoryFileStore struct {
@@ -35,7 +33,6 @@ func (mem MemoryFileStore) Write(fileName string, data []byte) bool {
 	} else {
 		file := File{fileName, data}
 		mem.Files[fileName] = file
-		log.Printf("Wrote data to Memory, bytes" + strconv.Itoa(len(data)))
 	}
 	return true
 }
