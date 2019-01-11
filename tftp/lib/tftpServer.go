@@ -91,7 +91,7 @@ func handleRequest(pc net.PacketConn, addr net.Addr, pr *PacketRequest, connecti
 
 // For a read: sends the next DATA block in response to an ACK
 func handleAck(pc net.PacketConn, addr net.Addr, pa *PacketAck, connectionSvc *ConnectionService) {
-	payload := connectionSvc.readData(addr.String(), pa.BlockNum)
+	payload := connectionSvc.readData(addr.String(), pa.BlockNum+1)
 	dataPacket := &PacketData{pa.BlockNum + 1, payload}
 	log.Println("Sending next DATA in response to ACK")
 	sendResponse(pc, addr, dataPacket)

@@ -10,6 +10,6 @@ import (
 func main() {
 	cs := tftp.ConnectionService{}.New()
 	go tftp.Listen(&cs)
-	log.Println("Press a key to exit")
+	log.Println("Press enter to exit")
 	fmt.Scanln()
 }
