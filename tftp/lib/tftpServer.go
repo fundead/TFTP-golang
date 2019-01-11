@@ -11,7 +11,7 @@ type UDPPacket struct {
 	Data    []byte
 }
 
-func listen(connectionService *ConnectionService) {
+func Listen(connectionService *ConnectionService) {
 	inbound := make(chan UDPPacket) // TODO add buffered channel length
 	addr := net.UDPAddr{
 		IP:   net.ParseIP("127.0.0.1"),
