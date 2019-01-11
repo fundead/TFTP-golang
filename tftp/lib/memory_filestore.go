@@ -1,6 +1,10 @@
 package tftp
 
-import "errors"
+import (
+	"errors"
+	"log"
+	"strconv"
+)
 
 type MemoryFileStore struct {
 	files map[string]File
@@ -9,6 +13,11 @@ type MemoryFileStore struct {
 type File struct {
 	fileName string
 	data     []byte
+}
+
+func (mem MemoryFileStore) New() MemoryFileStore {
+	mem.files = make(map[string]File)
+	return mem
 }
 
 func (mem MemoryFileStore) Read(fileName string) ([]byte, error) {
@@ -26,6 +35,7 @@ func (mem MemoryFileStore) Write(fileName string, data []byte) bool {
 	} else {
 		file := File{fileName, data}
 		mem.files[fileName] = file
+		log.Printf("Wrote data to Memory, bytes" + strconv.Itoa(len(data)))
 	}
 	return true
 }

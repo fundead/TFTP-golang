@@ -8,7 +8,8 @@ import (
 )
 
 func main() {
-	go tftp.Listen(&tftp.ConnectionService{})
+	cs := tftp.ConnectionService{}.New()
+	go tftp.Listen(&cs)
 	log.Println("Press a key to exit")
 	fmt.Scanln()
 }

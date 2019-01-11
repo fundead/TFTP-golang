@@ -6,10 +6,12 @@ type ConnectionService struct {
 	PendingWrites map[string][]byte
 }
 
-func (cs ConnectionService) new() {
+// New instantiates a ConnectionService
+func (cs ConnectionService) New() ConnectionService {
 	cs.PendingReads = make(map[string][]byte)
 	cs.PendingWrites = make(map[string][]byte)
-	cs.FileStore = MemoryFileStore{}
+	cs.FileStore = MemoryFileStore{}.New()
+	return cs
 }
 
 func (cs ConnectionService) openRead(fileName string) []byte {
