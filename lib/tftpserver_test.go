@@ -1,72 +1,63 @@
 package tftp
 
-import "testing"
+import (
+	"net"
+	"testing"
+	"time"
+)
 
-func MakeInbound() chan UDPPacket {
-	return make(chan UDPPacket)
-}
-
-func BuildPacket(opcode byte) UDPPacket {
-	b := []byte{0, opcode}
-	u := UDPPacket{nil, b}
-	return u
-}
-
-func BuildRequestPacket(opcode uint16, fileName string) UDPPacket {
-	pr := PacketRequest{opcode, fileName, "octet"}
-	return UDPPacket{nil, pr.Serialize()}
-}
-
-func BuildDataPacket(blockNumber uint16, data []byte) UDPPacket {
-	pd := PacketData{blockNumber, []byte(data)}
-	return UDPPacket{nil, pd.Serialize()}
-}
-
-func BuildAckPacket(blockNumber uint16) UDPPacket {
-	pa := PacketAck{blockNumber}
-	return UDPPacket{nil, pa.Serialize()}
-}
-
-func TestProcess(t *testing.T) {
-	connSvc := ConnectionService{}
-	ch := make(chan UDPPacket)
-	go process(ch, &connSvc)
-	packet := BuildPacket(4)
-	ch <- packet
+func SetupTestServer() (cs ConnectionService, ch chan UDPPacket, packetConn net.PacketConn) {
+	packetConn, _ = net.ListenPacket("udp", "127.0.0.1:10000")
+	cs = ConnectionService{}.New()
+	ch = make(chan UDPPacket)
+	return cs, ch, packetConn
 }
 
 func TestWriteFile(t *testing.T) {
-	writeRequest := BuildRequestPacket(OpWRQ, "testfile")
-	//ack := BuildAckPacket(0x0) // assert receive this
-	dataPacket := BuildDataPacket(0x1, []byte("content"))
-	//ackData := BuildAckPacket(0x1) // assert receive this
+	// Arrange
+	connSvc, ch, packetConn := SetupTestServer()
+	go read(packetConn, ch)
+	go process(packetConn, ch, &connSvc)
 
-	connSvc := ConnectionService{}
-	ch := make(chan UDPPacket)
-	go process(ch, &connSvc)
+	// Act
+	sourceAddress := &net.UDPAddr{net.ParseIP("127.0.0.1"), 10000, ""}
+	writeRequest := &PacketRequest{0x2, "testfile", "octet"}
+	dataPacket := &PacketData{0x1, []byte("content")}
+	sendResponse(packetConn, sourceAddress, writeRequest)
+	sendResponse(packetConn, sourceAddress, dataPacket)
 
-	ch <- writeRequest
-	//ch <- ack
-	ch <- dataPacket
-	//ch <- ackData
-
-	// assert file exists
+	// Assert
+	time.Sleep(20 * time.Millisecond)
+	file, err := connSvc.FileStore.Read("testfile")
+	if file == nil || err != nil {
+		t.Fatal("File wasn't written to MemoryFileStore", err)
+	}
 }
 
 func TestReadFile(t *testing.T) {
-	readRequest := BuildRequestPacket(OpRRQ, "testfile")
-	ackData := BuildAckPacket(0x1)
+	// Arrange
+	connSvc, ch, packetConn := SetupTestServer()
+	go process(packetConn, ch, &connSvc)
+	connSvc.FileStore.Files["testreadfile"] = File{"testreadfile", make([]byte, 513)}
 
-	connSvc := ConnectionService{}
-	ch := make(chan UDPPacket)
-	go process(ch, &connSvc)
+	// Act
+	sourceAddress := &net.UDPAddr{net.ParseIP("127.0.0.1"), 10000, ""}
+	readRequest := &PacketRequest{0x1, "testreadfile", "octet"}
+	packet := UDPPacket{sourceAddress, readRequest.Serialize()}
+	ch <- packet
 
-	ch <- readRequest
-	// assert receive data
-	//dataPacket := BuildDataPacket(0x1, []byte("content")) // assert receive this
-	ch <- ackData
-
-	if 1 != 0 {
-		t.Fatal("Not expected")
+	// Assert
+	time.Sleep(20 * time.Millisecond)
+	if len(connSvc.PendingReads) != 1 {
+		t.Fatal("Expected read not in flight")
 	}
+}
+
+func TestInstatiation(t *testing.T) {
+	connSvc, ch, packetConn := SetupTestServer()
+	go process(packetConn, ch, &connSvc)
+	ack := &PacketAck{0x1}
+	sourceAddress := &net.UDPAddr{net.ParseIP("127.0.0.1"), 10000, ""}
+	packet := UDPPacket{sourceAddress, ack.Serialize()}
+	ch <- packet
 }
