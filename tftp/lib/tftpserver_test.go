@@ -28,8 +28,9 @@ func BuildAckPacket(blockNumber uint16) UDPPacket {
 }
 
 func TestProcess(t *testing.T) {
+	connSvc := ConnectionService{}
 	ch := make(chan UDPPacket)
-	go process(ch)
+	go process(ch, &connSvc)
 	packet := BuildPacket(4)
 	ch <- packet
 }
@@ -40,8 +41,9 @@ func TestWriteFile(t *testing.T) {
 	dataPacket := BuildDataPacket(0x1, []byte("content"))
 	//ackData := BuildAckPacket(0x1) // assert receive this
 
+	connSvc := ConnectionService{}
 	ch := make(chan UDPPacket)
-	go process(ch)
+	go process(ch, &connSvc)
 
 	ch <- writeRequest
 	//ch <- ack
@@ -55,8 +57,9 @@ func TestReadFile(t *testing.T) {
 	readRequest := BuildRequestPacket(OpRRQ, "testfile")
 	ackData := BuildAckPacket(0x1)
 
+	connSvc := ConnectionService{}
 	ch := make(chan UDPPacket)
-	go process(ch)
+	go process(ch, &connSvc)
 
 	ch <- readRequest
 	// assert receive data
