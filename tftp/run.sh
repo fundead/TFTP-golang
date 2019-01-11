@@ -1,0 +1,1 @@
+sudo ./cmd/tftpd/tftpd
