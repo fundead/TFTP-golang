@@ -78,12 +78,12 @@ func parse(pc net.PacketConn, addr net.Addr, packet Packet, connectionSvc *Conne
 func handleRequest(pc net.PacketConn, addr net.Addr, pr *PacketRequest, connectionSvc *ConnectionService) {
 	if pr.Op == OpRRQ { // Read Request
 		log.Println("Read req")
-		data := connectionSvc.openRead(pr.Filename)
+		data := connectionSvc.openRead(addr.String(), pr.Filename)
 		log.Println("Sending DATA in response to RRQ")
 		sendResponse(pc, addr, &PacketData{0x1, data})
 	} else if pr.Op == OpWRQ { // Write Request
 		log.Println("Write req")
-		connectionSvc.openWrite(pr.Filename)
+		connectionSvc.openWrite(addr.String(), pr.Filename)
 		log.Println("Sending ACK in response to WRQ")
 		sendResponse(pc, addr, &PacketAck{0})
 	}
@@ -91,7 +91,7 @@ func handleRequest(pc net.PacketConn, addr net.Addr, pr *PacketRequest, connecti
 
 // For a read: sends the next DATA block in response to an ACK
 func handleAck(pc net.PacketConn, addr net.Addr, pa *PacketAck, connectionSvc *ConnectionService) {
-	payload := connectionSvc.readData("") //pa.BlockNum)
+	payload := connectionSvc.readData(addr.String(), pa.BlockNum)
 	dataPacket := &PacketData{pa.BlockNum + 1, payload}
 	log.Println("Sending next DATA in response to ACK")
 	sendResponse(pc, addr, dataPacket)
@@ -100,7 +100,7 @@ func handleAck(pc net.PacketConn, addr net.Addr, pa *PacketAck, connectionSvc *C
 // For a write: sends an ACK in response to a DATA payload
 func handleData(pc net.PacketConn, addr net.Addr, pd *PacketData, connectionSvc *ConnectionService) {
 	//connectionSvc.writeData(pd.BlockNum, pd.Data)
-	connectionSvc.writeData("", pd.Data) // TODO
+	connectionSvc.writeData(addr.String(), pd.BlockNum, pd.Data)
 	ackPacket := &PacketAck{pd.BlockNum}
 	log.Println("Sending ACK in response to DATA")
 	sendResponse(pc, addr, ackPacket)
