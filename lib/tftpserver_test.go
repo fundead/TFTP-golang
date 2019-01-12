@@ -33,15 +33,6 @@ func TestReadFile(t *testing.T) {
 	}
 }
 
-func TestInstatiation(t *testing.T) {
-	connSvc, ch, packetConn := SetupTestServer(5000)
-	go process(packetConn, ch, &connSvc)
-	ack := &PacketAck{0x1}
-	sourceAddress := &net.UDPAddr{net.ParseIP("127.0.0.1"), 10000, ""}
-	packet := UDPPacket{sourceAddress, ack.Serialize()}
-	ch <- packet
-}
-
 func TestWriteFile(t *testing.T) {
 	// Arrange
 	connSvc, ch, packetConn := SetupTestServer(5002)
@@ -61,4 +52,14 @@ func TestWriteFile(t *testing.T) {
 	if file == nil || err != nil {
 		t.Fatal("File wasn't written to MemoryFileStore", err)
 	}
+}
+
+// A smoke test for confirming the instance/channel communication works without error
+func TestInstatiation(t *testing.T) {
+	connSvc, ch, packetConn := SetupTestServer(5000)
+	go process(packetConn, ch, &connSvc)
+	ack := &PacketAck{0x1}
+	sourceAddress := &net.UDPAddr{net.ParseIP("127.0.0.1"), 10000, ""}
+	packet := UDPPacket{sourceAddress, ack.Serialize()}
+	ch <- packet
 }
