@@ -35,7 +35,9 @@ Read (RRQ), Write (WRQ) requests and unknown requests will be outputted to `requ
 
 ## Tests
 
-for the server are located in `lib/tftpserver_test.go` and are integration-style tests. When ran within Visual Studio Code, these will output the requestLog to `lib/`.
+for the server are located in `lib/tftpserver_test.go` and are integration-style tests.
+
+These seem to like being run with `go test` within `lib/`, Visual Studio Code seems to be flaky running them on my machine.
 
 ## Author
 
